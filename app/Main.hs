@@ -1,64 +1,69 @@
-
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module Main(main) where
 
-import Data.Char
---import Data.List as List
---import Control.Monad
+import Control.Exception (evaluate)
+import System.Environment(getArgs)
+import Testing(Case(..),runTests)
+
+import qualified Attempt1
+import qualified Attempt2
+import qualified Attempt3
+import qualified Attempt4
 
 main :: IO ()
 main = do
-    --run "axzayazaxazayaxaza" "XYZ"
-    run "iaizixiziXiziaiyiaixibiYiciZixidiziyiai" "ZXZAYAXBYCZXDZYA"
-    --run "iaizixizayaiXiziaiyiaixibiYiciZixidiziyiai" "ZXZAYAXBYCZXDZYA"
-    --run "iaizixizayaiXiziaiyiaixibiYiqiZixidiziyiai" "ZXZAYAXBYCZXDZYA"
-    --run "iaizixizayaiXiziaiyiaixibiYiciQixidiziyiai" "ZXZAYAXBYCZXDZYA"
+    args <- getArgs
+    match <- evaluate $
+            case args of
+                ["1"] -> Attempt1.match
+                ["2"] -> Attempt2.match
+                ["3"] -> Attempt3.match
+                ["4"] -> Attempt4.match
+                [] -> Attempt4.match
+                _ -> error $ show args
+    let alg =  uncurry match
+    _tests4 <- loadTests "4" "tests4" tests4x
+    _tests8 <- loadTests "8" "tests8" tests8x
+    _tests12 <- loadTests "12" "tests12" tests12x
+    _tests13 <- loadTests "13" "tests13" tests13x
+    let allTests =
+            myTests
+            <> _tests4
+            <> _tests8
+            <> _tests12
+            <> _tests13
+    runTests alg allTests (const True)
 
-run :: String -> String -> IO ()
-run a b = do
-    putStrLn $ "run: " <> show (a,b) <> "..."
-    let aChunks = stage1 a
-    let points = map fst (snd aChunks)
-    let bChunks = stage2 b points
-    print aChunks
-    print bChunks
+type AbbvCase = Case (String,String) Bool
 
-    --let res = abbreviation a b
-    --putStrLn $ "run: " <> show (a,b) <> " -> " <> res
+myTests :: [AbbvCase]
+myTests = [
+    Case "my.1" ("thIs","THAT") False,
+    Case "my.2" ("foo","FO") True,
+    Case "my.3" ("axzayazaxazayaxaza","XYZ") True,
+    Case "my.4" ("iaizixizayaiXiziaiyiaixibiYiciZixidiziyiai","ZXZAYAXBYCZXDZYA") True
+    ]
 
-stage1 :: String -> (String, [(Char,String)])
-stage1 s = do
-    let (low1,back) = span isLower s
-    case back of
-        [] -> (low1,[])
-        up:rest -> let (low2,chunks) = stage1 rest in (low1, (up,low2):chunks)
+tests4x :: [Bool]
+tests4x = [y,n,y,y,n,y,y]
 
-stage2 :: String -> String -> Maybe [String]
-stage2 b points = do
-    (res,left) <- stage2rev (reverse b) (reverse points)
-    return $ map reverse (left : reverse res)
+tests8x :: [Bool]
+tests8x = [y,y,y,y,n,y,y,n,n,y]
 
-stage2rev :: String -> String -> Maybe ([String],String)
-stage2rev s points = case points of
-    [] -> Just ([],s)
-    p1:points' -> do
-        (xs,s') <- chop p1 s
-        (res,left) <- stage2rev s' points'
-        return ((xs++[p1]) : res, left)
+tests12x :: [Bool]
+tests12x = [y,n,y,y,y,n,n,n,n,y]
 
-chop :: Char -> String -> Maybe (String,String)
-chop c s = do
-    let (front,back) = span (/=c) s
-    case back of
-        [] -> Nothing
-        _:rest -> Just (front,rest)
+tests13x :: [Bool]
+tests13x = [y,n,y,n,n,n,y,y,n,y]
 
+y,n::Bool
+(y,n) = (True,False)
 
-    {-
-_abbreviation :: String -> String -> String
-_abbreviation a b = if match a b then "YES" else "NO"
-
-match :: String -> String -> Bool
-match = undefined
--}
+loadTests :: String -> FilePath -> [Bool] -> IO [AbbvCase]
+loadTests tag filename bools = do
+    contents <- readFile filename
+    return $ zipWith make [1::Int ..] $ zip (pairUp $ tail $ lines contents) bools
+        where make i (input,expected) = Case { name = tag <> "." <> show i, input, expected }
+              pairUp = \case a:b:list -> (a,b) : pairUp list; _ -> []
