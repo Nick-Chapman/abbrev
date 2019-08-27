@@ -4,8 +4,12 @@ module Attempt3(match) where
 
 import Data.Char
 
+--import Debug.Trace
+trace :: String -> a -> a
+trace _ a = a
+
 match :: A -> B -> Bool
-match a b =
+match a b = trace (show ("match",a,b)) $
     case nextUpperInA a of
         Nothing -> case matchInner a b of Nothing -> False; Just _ -> True
         Just (pa,u,a') ->
@@ -18,7 +22,7 @@ match a b =
                             greedyMatch pa' u a' b'
 
 greedyMatch :: PA -> U -> A -> B -> Bool
-greedyMatch pa u a b =
+greedyMatch pa u a b = trace (show ("greedy",pa,u,a,b)) $
     case findUpperInB u b of
         Nothing -> match a b
         Just (pb,b') ->

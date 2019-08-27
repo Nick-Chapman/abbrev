@@ -59,7 +59,8 @@ runCheck n b = do
     where
         mics = truncate (n * fromIntegral (1000000::Int))
         classify = \case
-            Left e -> Exception (head $ lines $ show (e::SomeException))
+            --Left e -> Exception (head $ lines $ show (e::SomeException))
+            Left e -> Exception (show (e::SomeException))
             Right Nothing -> Timeout (Time n)
             Right (Just (_,False)) -> Fail
             Right (Just (d,True)) -> Pass (Time d)

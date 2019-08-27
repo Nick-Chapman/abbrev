@@ -12,8 +12,10 @@ extra-source-files:
 
 dependencies:
 - array
+- containers
 - hashtables
 - base >= 4.7 && < 5
+- mtl
 - timeit
 
 ghc-options:
